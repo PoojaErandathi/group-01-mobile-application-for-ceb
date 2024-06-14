@@ -1,5 +1,4 @@
 import 'package:ceb_app/reusable_widgets/app_bar.dart';
-import 'package:ceb_app/screens/request_connection_screen.dart';
 import 'package:ceb_app/screens/submit_complain_screen.dart';
 import 'package:ceb_app/screens/tips_screen.dart';
 import 'package:ceb_app/utils/color_utils.dart';
@@ -74,7 +73,7 @@ class _CustomerServiceState extends State<CustomerService> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const requestConnection()),
+                          builder: (context) => const Complains()),
                     );
                   },
                   child: ListTile(

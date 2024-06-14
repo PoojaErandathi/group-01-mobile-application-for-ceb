@@ -8,6 +8,69 @@ class Complains extends StatefulWidget {
 }
 
 class _ComplainsState extends State<Complains> {
+  final TextEditingController _complainController = TextEditingController();
+  bool _isSubmitting = false; // To track the submission state
+
+  void _submitComplain() async {
+    final String complain = _complainController.text.trim();
+
+    if (complain.isEmpty) {
+      _showAlertDialog(
+        "Error",
+        "Please enter your complaint.",
+        Icons.error_outline,
+        Colors.red,
+      );
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    await Future.delayed(Duration(seconds: 2)); // Simulate a network call
+
+    setState(() {
+      _isSubmitting = false;
+    });
+
+    _showAlertDialog(
+      "Success",
+      "Complaint submitted successfully!",
+      Icons.check_circle_outline,
+      Colors.green,
+    );
+
+    _complainController.clear(); // Clear the text field
+  }
+
+  void _showAlertDialog(
+      String title, String message, IconData icon, Color iconColor) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(icon, color: iconColor),
+              SizedBox(width: 10),
+              Text(title),
+            ],
+          ),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -65,6 +128,7 @@ class _ComplainsState extends State<Complains> {
                           ),
                           SizedBox(height: 10),
                           TextField(
+                            controller: _complainController,
                             maxLines: 8,
                             decoration: InputDecoration(
                               border: OutlineInputBorder(),
@@ -81,12 +145,12 @@ class _ComplainsState extends State<Complains> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.yellow,
                   ),
-                  onPressed: () {
-                    // Your logic here
-                  },
-                  child: ListTile(
-                    title: Center(child: Text('Submit')),
-                  ),
+                  onPressed: _isSubmitting ? null : _submitComplain,
+                  child: _isSubmitting
+                      ? CircularProgressIndicator(color: Colors.black)
+                      : ListTile(
+                          title: Center(child: Text('Submit')),
+                        ),
                 ),
               ],
             ),

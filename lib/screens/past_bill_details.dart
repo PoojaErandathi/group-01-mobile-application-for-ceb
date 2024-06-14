@@ -71,7 +71,7 @@ class _PastBillDetailsState extends State<PastBillDetails> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const PastBillDetails()),
+                          builder: (context) => const BillDetail()),
                     );
                   },
                   child: ListTile(
@@ -93,7 +93,7 @@ class _PastBillDetailsState extends State<PastBillDetails> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const PastBillDetails()),
+                          builder: (context) => const BillDetail()),
                     );
                   },
                   child: ListTile(
@@ -115,7 +115,7 @@ class _PastBillDetailsState extends State<PastBillDetails> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const PastBillDetails()),
+                          builder: (context) => const BillDetail()),
                     );
                   },
                   child: ListTile(

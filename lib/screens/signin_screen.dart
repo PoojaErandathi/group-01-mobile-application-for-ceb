@@ -1,4 +1,5 @@
 import 'package:ceb_app/reusable_widgets/reusable_widgets.dart';
+import 'package:ceb_app/screens/home_screen.dart';
 import 'package:ceb_app/screens/signup_screen.dart';
 import 'package:ceb_app/utils/color_utils.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +14,11 @@ class SigninScreen extends StatefulWidget {
 class _SigninScreenState extends State<SigninScreen> {
   TextEditingController _passwordTextController = TextEditingController();
   TextEditingController _emailTextController = TextEditingController();
+
+  // fetched credentials
+  final String fetchedUsername = "user";
+  final String fetchedPassword = "pw123";
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,8 +32,7 @@ class _SigninScreenState extends State<SigninScreen> {
           child: Padding(
             padding: EdgeInsets.fromLTRB(
               20,
-              MediaQuery.of(context).size.height *
-                  0.2, // Adjusted the top padding to move the logo up
+              MediaQuery.of(context).size.height * 0.2,
               20,
               0,
             ),
@@ -37,17 +42,42 @@ class _SigninScreenState extends State<SigninScreen> {
                 SizedBox(
                   height: 30,
                 ),
-                reusableTextField("Enter UserName", Icons.person_outline, false,
-                    _emailTextController),
+                reusableTextField(
+                  "Enter UserName",
+                  Icons.person_outline,
+                  false,
+                  _emailTextController,
+                ),
                 SizedBox(
                   height: 20,
                 ),
-                reusableTextField("Enter Password", Icons.lock_outline, true,
-                    _passwordTextController),
+                reusableTextField(
+                  "Enter Password",
+                  Icons.lock_outline,
+                  true,
+                  _passwordTextController,
+                ),
                 SizedBox(
                   height: 20,
                 ),
-                signInSignUpButton(context, true, () {}),
+                signInSignUpButton(context, true, () {
+                  String username = _emailTextController.text;
+                  String password = _passwordTextController.text;
+
+                  if (username == fetchedUsername &&
+                      password == fetchedPassword) {
+                    // Navigate to HomeScreen
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => HomeScreen(),
+                      ),
+                    );
+                  } else {
+                    // Show alert dialog
+                    _showAlertDialog(context);
+                  }
+                }),
                 signUpOption(),
               ],
             ),
@@ -65,15 +95,38 @@ class _SigninScreenState extends State<SigninScreen> {
             style: TextStyle(color: Colors.white70)),
         GestureDetector(
           onTap: () {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => SignUpScreen()));
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SignUpScreen()),
+            );
           },
           child: const Text(
             " Sign Up",
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
-        )
+        ),
       ],
+    );
+  }
+
+  // Function to show alert dialog
+  void _showAlertDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Invalid Credentials"),
+          content: Text("The username or password you entered is incorrect."),
+          actions: <Widget>[
+            TextButton(
+              child: Text("OK"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

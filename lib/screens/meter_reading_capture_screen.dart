@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:ceb_app/screens/bill_detail_screen.dart'; // Import the BillDetailScreen
 import 'package:ceb_app/utils/color_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -11,10 +12,9 @@ class MeterReadingCapture extends StatefulWidget {
 }
 
 class _MeterReadingCaptureState extends State<MeterReadingCapture> {
-  File? _image; // Make _image nullable since it may initially be null
+  File? _image;
 
-  final ImagePicker _imagePicker =
-      ImagePicker(); // Corrected the imagePicker instance
+  final ImagePicker _imagePicker = ImagePicker();
 
   Future<void> getImage() async {
     final image = await _imagePicker.pickImage(source: ImageSource.camera);
@@ -22,7 +22,36 @@ class _MeterReadingCaptureState extends State<MeterReadingCapture> {
       setState(() {
         _image = File(image.path);
       });
+      _showProgressDialog(context);
     }
+  }
+
+  void _showProgressDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 20),
+              Text("Analysing..."),
+            ],
+          ),
+        );
+      },
+    );
+
+    Future.delayed(Duration(seconds: 3), () {
+      Navigator.of(context).pop(); // Dismiss the progress dialog
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BillDetail(), // Navigate to BillDetailScreen
+        ),
+      );
+    });
   }
 
   @override
@@ -46,7 +75,7 @@ class _MeterReadingCaptureState extends State<MeterReadingCapture> {
           child: Padding(
             padding: EdgeInsets.fromLTRB(
               20,
-              120, // Adjusted the top padding to move the logo up
+              120,
               20,
               0,
             ),
@@ -54,7 +83,10 @@ class _MeterReadingCaptureState extends State<MeterReadingCapture> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _image == null
-                    ? Text("No image selected")
+                    ? Text(
+                        "No image selected",
+                        style: TextStyle(color: Colors.white),
+                      )
                     : Image.file(_image!),
                 SizedBox(height: 20),
               ],

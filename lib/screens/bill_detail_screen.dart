@@ -9,6 +9,18 @@ class BillDetail extends StatefulWidget {
 }
 
 class _BillDetailState extends State<BillDetail> {
+  // Hardcoded values for demo purposes
+  final String accountNumber = "1234567890";
+  final String accountOwnerName = "John Doe";
+  final String readOn = "2024-06-01";
+  final String meterReading = "34567 kWh";
+  final String monthlyBill = "\Rs.120.00";
+  final String otherCharges = "\Rs.15.00";
+  final String openingBalance = "\Rs.50.00";
+  final String totalPayable = "\Rs.185.00";
+  final String dueDate = "2024-06-20";
+  final String lastPayment = "\Rs.100.00 on 2024-05-30";
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -59,52 +71,52 @@ class _BillDetailState extends State<BillDetail> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Account number : ",
+                            "Account number: $accountNumber",
                             style: TextStyle(fontSize: 18),
                           ),
                           SizedBox(height: 8),
                           Text(
-                            "Account owner name : ",
+                            "Account owner name: $accountOwnerName",
                             style: TextStyle(fontSize: 18),
                           ),
                           SizedBox(height: 8),
                           Text(
-                            "Read on : ",
+                            "Read on: $readOn",
                             style: TextStyle(fontSize: 18),
                           ),
                           SizedBox(height: 8),
                           Text(
-                            "Meter reading : ",
+                            "Meter reading: $meterReading",
                             style: TextStyle(fontSize: 18),
                           ),
                           SizedBox(height: 8),
                           Text(
-                            "Monthly bill : ",
+                            "Monthly bill: $monthlyBill",
                             style: TextStyle(fontSize: 18),
                           ),
                           SizedBox(height: 8),
                           Text(
-                            "Other charges : ",
+                            "Other charges: $otherCharges",
                             style: TextStyle(fontSize: 18),
                           ),
                           SizedBox(height: 8),
                           Text(
-                            "Opening balance : ",
+                            "Opening balance: $openingBalance",
                             style: TextStyle(fontSize: 18),
                           ),
                           SizedBox(height: 8),
                           Text(
-                            "Total payable : ",
+                            "Total payable: $totalPayable",
                             style: TextStyle(fontSize: 18),
                           ),
                           SizedBox(height: 8),
                           Text(
-                            "Due date : ",
+                            "Due date: $dueDate",
                             style: TextStyle(fontSize: 18),
                           ),
                           SizedBox(height: 8),
                           Text(
-                            "Last payment : ",
+                            "Last payment: $lastPayment",
                             style: TextStyle(fontSize: 18),
                           ),
                         ],
@@ -118,14 +130,10 @@ class _BillDetailState extends State<BillDetail> {
                     backgroundColor: Colors.yellow, // Button color
                   ),
                   onPressed: () {
-                    // Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(
-                    //       builder: (context) => const MeterReadingCapture()),
-                    // );
+                    // Add navigation or functionality here
                   },
                   child: ListTile(
-                    title: Center(child: Text('Continue to payement')),
+                    title: Center(child: Text('Continue to payment')),
                   ),
                 ),
               ],
