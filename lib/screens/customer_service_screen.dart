@@ -1,11 +1,13 @@
-import 'package:ceb_app/reusable_widgets/app_bar.dart';
 import 'package:ceb_app/screens/submit_complain_screen.dart';
+import 'package:ceb_app/screens/customer_requests_screen.dart'; // Assuming you have this screen
 import 'package:ceb_app/screens/tips_screen.dart';
 import 'package:ceb_app/utils/color_utils.dart';
 import 'package:flutter/material.dart';
 
 class CustomerService extends StatefulWidget {
-  const CustomerService({super.key});
+  final String accountNumber;
+
+  const CustomerService({super.key, required this.accountNumber});
 
   @override
   State<CustomerService> createState() => _CustomerServiceState();
@@ -43,15 +45,15 @@ class _CustomerServiceState extends State<CustomerService> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.yellow, // Button color
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                          10), // Adjust the value for the desired roundedness
+                      borderRadius: BorderRadius.circular(10), // Adjust the value for the desired roundedness
                     ),
                   ),
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const Complains()),
+                        builder: (context) => Complains(accountNumber: widget.accountNumber),
+                      ),
                     );
                   },
                   child: ListTile(
@@ -65,21 +67,19 @@ class _CustomerServiceState extends State<CustomerService> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.yellow, // Button color
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                          10), // Adjust the value for the desired roundedness
+                      borderRadius: BorderRadius.circular(10), // Adjust the value for the desired roundedness
                     ),
                   ),
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const Complains()),
+                        builder: (context) => NewRequest(accountNumber: widget.accountNumber),
+                      ),
                     );
                   },
                   child: ListTile(
-                    title: Center(
-                        child:
-                            Text('Submit a request to get a new connection')),
+                    title: Center(child: Text('Submit a request to get a new connection')),
                   ),
                 ),
                 SizedBox(
@@ -89,20 +89,19 @@ class _CustomerServiceState extends State<CustomerService> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.yellow, // Button color
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                          10), // Adjust the value for the desired roundedness
+                      borderRadius: BorderRadius.circular(10), // Adjust the value for the desired roundedness
                     ),
                   ),
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const Tips()),
+                        builder: (context) => const Tips(),
+                      ),
                     );
                   },
                   child: ListTile(
-                    title: Center(
-                        child: Text('Tips for reduce your electricity usage')),
+                    title: Center(child: Text('Tips for reduce your electricity usage')),
                   ),
                 ),
                 SizedBox(

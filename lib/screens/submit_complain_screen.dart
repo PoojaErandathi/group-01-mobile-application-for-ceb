@@ -1,7 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class Complains extends StatefulWidget {
-  const Complains({super.key});
+  final String accountNumber;
+
+  const Complains({super.key, required this.accountNumber});
 
   @override
   State<Complains> createState() => _ComplainsState();
@@ -28,24 +31,41 @@ class _ComplainsState extends State<Complains> {
       _isSubmitting = true;
     });
 
-    await Future.delayed(Duration(seconds: 2)); // Simulate a network call
+    try {
+      final Timestamp now = Timestamp.now();
+      final String date = now.toDate().toString().split(' ')[0]; // YYYY-MM-DD
+      final String documentId = '${widget.accountNumber}_${date.replaceAll('-', '_')}_${now.seconds}';
 
-    setState(() {
-      _isSubmitting = false;
-    });
+      await FirebaseFirestore.instance.collection('complaints').doc(documentId).set({
+        'userAccountNumber': widget.accountNumber,
+        'complaint': complain,
+        'submittedAt': now,
+        'status': 'Pending',
+      });
 
-    _showAlertDialog(
-      "Success",
-      "Complaint submitted successfully!",
-      Icons.check_circle_outline,
-      Colors.green,
-    );
+      _showAlertDialog(
+        "Success",
+        "Complaint submitted successfully!",
+        Icons.check_circle_outline,
+        Colors.green,
+      );
 
-    _complainController.clear(); // Clear the text field
+      _complainController.clear(); // Clear the text field
+    } catch (e) {
+      _showAlertDialog(
+        "Error",
+        "Failed to submit complaint. Please try again.",
+        Icons.error_outline,
+        Colors.red,
+      );
+    } finally {
+      setState(() {
+        _isSubmitting = false;
+      });
+    }
   }
 
-  void _showAlertDialog(
-      String title, String message, IconData icon, Color iconColor) {
+  void _showAlertDialog(String title, String message, IconData icon, Color iconColor) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -147,7 +167,7 @@ class _ComplainsState extends State<Complains> {
                   ),
                   onPressed: _isSubmitting ? null : _submitComplain,
                   child: _isSubmitting
-                      ? CircularProgressIndicator(color: Colors.black)
+                      ? CircularProgressIndicator(color: Colors.yellow)
                       : ListTile(
                           title: Center(child: Text('Submit')),
                         ),

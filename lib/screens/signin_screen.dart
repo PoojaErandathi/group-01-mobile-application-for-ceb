@@ -2,6 +2,7 @@ import 'package:ceb_app/reusable_widgets/reusable_widgets.dart';
 import 'package:ceb_app/screens/home_screen.dart';
 import 'package:ceb_app/screens/signup_screen.dart';
 import 'package:ceb_app/utils/color_utils.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class SigninScreen extends StatefulWidget {
@@ -13,11 +14,12 @@ class SigninScreen extends StatefulWidget {
 
 class _SigninScreenState extends State<SigninScreen> {
   TextEditingController _passwordTextController = TextEditingController();
-  TextEditingController _emailTextController = TextEditingController();
+  TextEditingController _accountNumberTextController = TextEditingController();
 
-  // fetched credentials
-  final String fetchedUsername = "user";
-  final String fetchedPassword = "pw123";
+  // Firestore instance
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -38,15 +40,15 @@ class _SigninScreenState extends State<SigninScreen> {
             ),
             child: Column(
               children: <Widget>[
-                logoWidget("assest/images/ceb_logo.png"),
+                logoWidget("assets/images/ceb_logo.png"),
                 SizedBox(
                   height: 30,
                 ),
                 reusableTextField(
-                  "Enter UserName",
+                  "Enter Account Number",
                   Icons.person_outline,
                   false,
-                  _emailTextController,
+                  _accountNumberTextController,
                 ),
                 SizedBox(
                   height: 20,
@@ -60,24 +62,58 @@ class _SigninScreenState extends State<SigninScreen> {
                 SizedBox(
                   height: 20,
                 ),
-                signInSignUpButton(context, true, () {
-                  String username = _emailTextController.text;
-                  String password = _passwordTextController.text;
+                _isLoading
+                    ? CircularProgressIndicator()
+                    : signInSignUpButton(context, true, () async {
+                        setState(() {
+                          _isLoading = true;
+                        });
 
-                  if (username == fetchedUsername &&
-                      password == fetchedPassword) {
-                    // Navigate to HomeScreen
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => HomeScreen(),
-                      ),
-                    );
-                  } else {
-                    // Show alert dialog
-                    _showAlertDialog(context);
-                  }
-                }),
+                        String accountNumber = _accountNumberTextController.text;
+                        String password = _passwordTextController.text;
+
+                        if (accountNumber.isNotEmpty && password.isNotEmpty) {
+                          try {
+                            // Get the user document
+                            DocumentSnapshot userDoc = await _firestore
+                                .collection('users')
+                                .doc(accountNumber)
+                                .get();
+
+                            if (userDoc.exists) {
+                              // Check if the password matches
+                              if (userDoc['password'] == password) {
+                                // Navigate to HomeScreen
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => HomeScreen(accountNumber: accountNumber),
+                                  ),
+                                );
+                              } else {
+                                _showAlertDialog(context, "Invalid Password",
+                                    "The password you entered is incorrect.");
+                              }
+                            } else {
+                              _showAlertDialog(context, "Invalid Account Number",
+                                  "The account number you entered does not exist.");
+                            }
+                          } catch (e) {
+                            _showAlertDialog(context, "Error",
+                                "An error occurred: ${e.toString()}");
+                          } finally {
+                            setState(() {
+                              _isLoading = false;
+                            });
+                          }
+                        } else {
+                          setState(() {
+                            _isLoading = false;
+                          });
+                          _showAlertDialog(context, "Missing Fields",
+                              "Please fill out all fields.");
+                        }
+                      }),
                 signUpOption(),
               ],
             ),
@@ -91,8 +127,7 @@ class _SigninScreenState extends State<SigninScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text("Don't have account?",
-            style: TextStyle(color: Colors.white70)),
+        const Text("Don't have account?", style: TextStyle(color: Colors.white70)),
         GestureDetector(
           onTap: () {
             Navigator.push(
@@ -110,13 +145,13 @@ class _SigninScreenState extends State<SigninScreen> {
   }
 
   // Function to show alert dialog
-  void _showAlertDialog(BuildContext context) {
+  void _showAlertDialog(BuildContext context, String title, String content) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Invalid Credentials"),
-          content: Text("The username or password you entered is incorrect."),
+          title: Text(title),
+          content: Text(content),
           actions: <Widget>[
             TextButton(
               child: Text("OK"),

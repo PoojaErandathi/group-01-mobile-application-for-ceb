@@ -1,19 +1,47 @@
 import 'package:ceb_app/reusable_widgets/app_bar.dart';
+import 'package:ceb_app/screens/bill_payment.dart';
 import 'package:ceb_app/screens/customer_service_screen.dart';
 import 'package:ceb_app/screens/past_bill_details.dart';
 import 'package:ceb_app/screens/add_account_number_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:ceb_app/screens/signin_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ceb_app/utils/color_utils.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  final String accountNumber;
+
+  const HomeScreen({Key? key, required this.accountNumber}) : super(key: key);
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  String userName = '';
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserName();
+  }
+
+  void fetchUserName() async {
+    try {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.accountNumber)
+          .get();
+
+      if (userDoc.exists) {
+        setState(() {
+          userName = userDoc['name'];
+        });
+      }
+    } catch (e) {
+      print("Error fetching user name: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -32,109 +60,101 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(
               20,
-              120, // Adjusted the top padding to move the logo up
+              120,
               20,
               0,
             ),
             child: Column(
               children: <Widget>[
+                Text(
+                  'Welcome, $userName',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(height: 20),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.yellow, // Button color
+                    backgroundColor: Colors.yellow,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                          10), // Adjust the value for the desired roundedness
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) =>
-                              const EnterYourAccountNuumber()),
+                          builder: (context) => EnterYourAccountNuumber()),
+                          // builder: (context) => EnterYourAccountNuumber(accountNumber: widget.accountNumber)),
                     );
                   },
                   child: ListTile(
-                    title: Center(child: Text('Get meeter reading')),
-                    subtitle: Center(
-                        child:
-                            Text('Click here to capture your meteer reading')),
+                    title: Center(child: Text('Get meter reading')),
+                    subtitle: Center(child: Text('Click here to capture your meter reading')),
                   ),
                 ),
-                SizedBox(
-                  height: 35,
-                ),
+                SizedBox(height: 35),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.yellow, // Button color
+                    backgroundColor: Colors.yellow,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                          10), // Adjust the value for the desired roundedness
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const PastBillDetails()),
+                          builder: (context) => PastBillDetails(accountNumber: widget.accountNumber)),
                     );
                   },
                   child: ListTile(
                     title: Center(child: Text('Past Bill details')),
-                    subtitle: Center(
-                        child:
-                            Text('Click here to view your past bill details')),
+                    subtitle: Center(child: Text('Click here to view your past bill details')),
                   ),
                 ),
-                SizedBox(
-                  height: 35,
-                ),
+                SizedBox(height: 35),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.yellow, // Button color
+                    backgroundColor: Colors.yellow,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                          10), // Adjust the value for the desired roundedness
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                   onPressed: () {
-                    // Navigator.push(
-                    // context,
-                    // MaterialPageRoute(
-                    //   builder: (context) =>
-                    //     const CustomerService()),
-                    // );
+                    Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => BillPaymentScreen(accountNumber: widget.accountNumber)),
+                    );
                   },
                   child: ListTile(
                     title: Center(child: Text('Bill payments')),
-                    subtitle:
-                        Center(child: Text('Click here to pay your bill')),
+                    subtitle: Center(child: Text('Click here to pay your bill')),
                   ),
                 ),
-                SizedBox(
-                  height: 35,
-                ),
+                SizedBox(height: 35),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.yellow, // Button color
+                    backgroundColor: Colors.yellow,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                          10), // Adjust the value for the desired roundedness
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const CustomerService()),
+                          builder: (context) => CustomerService(accountNumber: widget.accountNumber)),
                     );
                   },
                   child: ListTile(
                     title: Center(child: Text('Other service')),
-                    subtitle: Center(
-                        child: Text('Click here to know about our services')),
+                    subtitle: Center(child: Text('Click here to know about our services')),
                   ),
-                )
+                ),
               ],
             ),
           ),

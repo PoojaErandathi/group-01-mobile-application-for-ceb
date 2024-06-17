@@ -43,15 +43,15 @@ class _MeterReadingCaptureState extends State<MeterReadingCapture> {
       },
     );
 
-    Future.delayed(Duration(seconds: 3), () {
-      Navigator.of(context).pop(); // Dismiss the progress dialog
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => BillDetail(), // Navigate to BillDetailScreen
-        ),
-      );
-    });
+    // Future.delayed(Duration(seconds: 3), () {
+    //   Navigator.of(context).pop(); // Dismiss the progress dialog
+    //   Navigator.push(
+    //     context,
+    //     MaterialPageRoute(
+    //       builder: (context) => BillDetail(), // Navigate to BillDetailScreen
+    //     ),
+    //   );
+    // });
   }
 
   @override

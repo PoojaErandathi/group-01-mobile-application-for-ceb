@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:math';
 
 class Tips extends StatefulWidget {
@@ -9,42 +10,36 @@ class Tips extends StatefulWidget {
 }
 
 class _TipsState extends State<Tips> {
-  final List<String> tips = [
-    "Tip 1: Turn off lights when not in use.",
-    "Tip 2: Use energy-efficient light bulbs.",
-    "Tip 3: Unplug devices when not in use.",
-    "Tip 4: Use a programmable thermostat.",
-    "Tip 5: Wash clothes in cold water.",
-    "Tip 6: Use ceiling fans to stay cool.",
-    "Tip 7: Seal windows and doors to prevent air leaks.",
-    "Tip 8: Use power strips to reduce standby power consumption.",
-    "Tip 9: Maintain your HVAC system regularly.",
-    "Tip 10: Use natural light whenever possible.",
-    "Tip 11: Install solar panels.",
-    "Tip 12: Use a clothesline instead of a dryer.",
-    "Tip 13: Insulate your home properly.",
-    "Tip 14: Use energy-efficient appliances.",
-    "Tip 15: Cook with a microwave or toaster oven.",
-    "Tip 16: Take shorter showers.",
-    "Tip 17: Use a laptop instead of a desktop computer.",
-    "Tip 18: Turn off your computer when not in use.",
-    "Tip 19: Install low-flow showerheads.",
-    "Tip 20: Use smart power strips."
-  ];
-
   final Random random = Random();
-  late List<String> selectedTips;
+  List<String> selectedTips = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    selectedTips = _getRandomTips();
+    _loadTips();
   }
 
-  List<String> _getRandomTips() {
-    List<String> tempList = List.from(tips);
-    tempList.shuffle(random);
-    return tempList.take(5).toList();
+  Future<void> _loadTips() async {
+    try {
+      QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('tips').get();
+      List<String> tips = snapshot.docs.map((doc) => doc['tipText'] as String).toList();
+
+      setState(() {
+        selectedTips = _getRandomTips(tips);
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading tips: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  List<String> _getRandomTips(List<String> tips) {
+    tips.shuffle(random);
+    return tips.take(5).toList();
   }
 
   void _showTipDetail(String tip) {
@@ -108,37 +103,26 @@ class _TipsState extends State<Tips> {
                     color: Colors.white,
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: selectedTips
-                            .map(
-                              (tip) => GestureDetector(
-                                onTap: () => _showTipDetail(tip),
-                                child: Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 8.0),
-                                  child: Text(
-                                    tip,
-                                    style: TextStyle(fontSize: 18),
-                                  ),
-                                ),
-                              ),
-                            )
-                            .toList(),
-                      ),
+                      child: isLoading
+                          ? Center(child: CircularProgressIndicator())
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: selectedTips
+                                  .map(
+                                    (tip) => GestureDetector(
+                                      onTap: () => _showTipDetail(tip),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                        child: Text(
+                                          tip,
+                                          style: TextStyle(fontSize: 18),
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
                     ),
-                  ),
-                ),
-                SizedBox(height: 10),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.yellow,
-                  ),
-                  onPressed: () {
-                    // Your logic here
-                  },
-                  child: ListTile(
-                    title: Center(child: Text('Continue to Payment')),
                   ),
                 ),
               ],

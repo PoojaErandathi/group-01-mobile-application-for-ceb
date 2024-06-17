@@ -1,15 +1,43 @@
 import 'package:ceb_app/screens/bill_detail_screen.dart';
 import 'package:ceb_app/utils/color_utils.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PastBillDetails extends StatefulWidget {
-  const PastBillDetails({super.key});
+  final String accountNumber;
+
+  const PastBillDetails({Key? key, required this.accountNumber})
+      : super(key: key);
 
   @override
   State<PastBillDetails> createState() => _PastBillDetailsState();
 }
 
 class _PastBillDetailsState extends State<PastBillDetails> {
+  List<String> billMonths = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchBillMonths();
+  }
+
+  void fetchBillMonths() async {
+    try {
+      QuerySnapshot billSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.accountNumber)
+          .collection('bills')
+          .get();
+
+      setState(() {
+        billMonths = billSnapshot.docs.map((doc) => doc.id).toList();
+      });
+    } catch (e) {
+      print("Error fetching bill months: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -31,97 +59,47 @@ class _PastBillDetailsState extends State<PastBillDetails> {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(
               20,
-              120, // Adjusted the top padding to move the logo up
+              120,
               20,
               0,
             ),
             child: Column(
               children: <Widget>[
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.yellow, // Button color
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                          10), // Adjust the value for the desired roundedness
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const BillDetail()),
-                    );
-                  },
-                  child: ListTile(
-                    title: Center(child: Text('May/2024')),
+                Text(
+                  'Past Bill Details',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
-                SizedBox(
-                  height: 35,
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.yellow, // Button color
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                          10), // Adjust the value for the desired roundedness
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const BillDetail()),
-                    );
-                  },
-                  child: ListTile(
-                    title: Center(child: Text('April/24')),
-                  ),
-                ),
-                SizedBox(
-                  height: 35,
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.yellow, // Button color
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                          10), // Adjust the value for the desired roundedness
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const BillDetail()),
-                    );
-                  },
-                  child: ListTile(
-                    title: Center(child: Text('March/24')),
-                  ),
-                ),
-                SizedBox(
-                  height: 35,
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.yellow, // Button color
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                          10), // Adjust the value for the desired roundedness
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const BillDetail()),
-                    );
-                  },
-                  child: ListTile(
-                    title: Center(child: Text('February/24')),
-                  ),
-                )
+                SizedBox(height: 20),
+                ...billMonths.map((month) => Column(
+                      children: [
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.yellow,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => BillDetail(
+                                        accountNumber: widget.accountNumber,
+                                        month: month,
+                                      )),
+                            );
+                          },
+                          child: ListTile(
+                            title: Center(child: Text(month)),
+                          ),
+                        ),
+                        SizedBox(height: 20), // Add space between buttons
+                      ],
+                    )),
               ],
             ),
           ),
