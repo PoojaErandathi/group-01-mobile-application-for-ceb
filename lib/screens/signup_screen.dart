@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ceb_app/reusable_widgets/reusable_widgets.dart';
 import 'package:ceb_app/screens/home_screen.dart';
-import 'package:ceb_app/screens/signin_screen.dart';
 import 'package:ceb_app/utils/color_utils.dart';
 import 'package:flutter/material.dart';
 
@@ -15,6 +14,7 @@ class SignUpScreen extends StatefulWidget {
 class _SignUpScreenState extends State<SignUpScreen> {
   TextEditingController _userNameTextController = TextEditingController();
   TextEditingController _emailTextController = TextEditingController();
+  TextEditingController _phoneTextController = TextEditingController();
   TextEditingController _accNumTextController = TextEditingController();
   TextEditingController _passwordTextController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -57,8 +57,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   SizedBox(
                     height: 20,
                   ),
-                  reusableTextField("Enter Email Id", Icons.email_outlined, false,
+                  reusableTextField("Enter Email", Icons.email_outlined, false,
                       _emailTextController),
+                  SizedBox(
+                    height: 20,
+                  ),
+                  reusableTextField("Enter Phone number", Icons.call, false,
+                      _phoneTextController),
                   SizedBox(
                     height: 20,
                   ),
@@ -96,6 +101,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       await userDoc.set({
         'name': _userNameTextController.text,
         'email': _emailTextController.text,
+        'phone': _phoneTextController.text,
         'password': _passwordTextController.text, // In a real app, hash the password before storing it
         'createdAt': Timestamp.now(),
       });

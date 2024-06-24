@@ -27,7 +27,7 @@ class _PastBillDetailsState extends State<PastBillDetails> {
       QuerySnapshot billSnapshot = await FirebaseFirestore.instance
           .collection('users')
           .doc(widget.accountNumber)
-          .collection('bills')
+          .collection('meterReadings')
           .get();
 
       setState(() {

@@ -7,7 +7,8 @@ class BillDetail extends StatefulWidget {
   final String accountNumber;
   final String month;
 
-  const BillDetail({Key? key, required this.accountNumber, required this.month}) : super(key: key);
+  const BillDetail({Key? key, required this.accountNumber, required this.month})
+      : super(key: key);
 
   @override
   State<BillDetail> createState() => _BillDetailState();
@@ -28,7 +29,7 @@ class _BillDetailState extends State<BillDetail> {
       DocumentSnapshot billSnapshot = await FirebaseFirestore.instance
           .collection('users')
           .doc(widget.accountNumber)
-          .collection('bills')
+          .collection('meterReadings')
           .doc(widget.month)
           .get();
 
@@ -116,22 +117,12 @@ class _BillDetailState extends State<BillDetail> {
                                 ),
                                 SizedBox(height: 8),
                                 Text(
-                                  "Meter reading: ${billData['meterReading'] ?? 'N/A'}",
+                                  "Meter reading: ${billData['readingValue'] ?? 'N/A'}",
                                   style: TextStyle(fontSize: 18),
                                 ),
                                 SizedBox(height: 8),
                                 Text(
                                   "Monthly bill: Rs.${billData['monthlyBill'] ?? 'N/A'}",
-                                  style: TextStyle(fontSize: 18),
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  "Other charges: Rs.${billData['otherCharges'] ?? 'N/A'}",
-                                  style: TextStyle(fontSize: 18),
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  "Opening balance: Rs.${billData['openingBalance'] ?? 'N/A'}",
                                   style: TextStyle(fontSize: 18),
                                 ),
                                 SizedBox(height: 8),
@@ -145,10 +136,6 @@ class _BillDetailState extends State<BillDetail> {
                                   style: TextStyle(fontSize: 18),
                                 ),
                                 SizedBox(height: 8),
-                                Text(
-                                  "Last payment: Rs.${billData['lastPayment'] ?? 'N/A'}",
-                                  style: TextStyle(fontSize: 18),
-                                ),
                               ],
                             ),
                           ),

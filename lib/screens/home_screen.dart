@@ -1,8 +1,8 @@
 import 'package:ceb_app/reusable_widgets/app_bar.dart';
 import 'package:ceb_app/screens/bill_payment.dart';
 import 'package:ceb_app/screens/customer_service_screen.dart';
+import 'package:ceb_app/screens/meter_reading_capture_screen.dart';
 import 'package:ceb_app/screens/past_bill_details.dart';
-import 'package:ceb_app/screens/add_account_number_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ceb_app/utils/color_utils.dart';
@@ -86,13 +86,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => EnterYourAccountNuumber()),
-                          // builder: (context) => EnterYourAccountNuumber(accountNumber: widget.accountNumber)),
+                          builder: (context) => MeterReadingCapture(
+                              accountNumber: widget.accountNumber)),
                     );
                   },
                   child: ListTile(
                     title: Center(child: Text('Get meter reading')),
-                    subtitle: Center(child: Text('Click here to capture your meter reading')),
+                    subtitle: Center(
+                        child:
+                            Text('Click here to capture your meter reading')),
                   ),
                 ),
                 SizedBox(height: 35),
@@ -107,32 +109,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => PastBillDetails(accountNumber: widget.accountNumber)),
+                          builder: (context) => PastBillDetails(
+                              accountNumber: widget.accountNumber)),
                     );
                   },
                   child: ListTile(
                     title: Center(child: Text('Past Bill details')),
-                    subtitle: Center(child: Text('Click here to view your past bill details')),
-                  ),
-                ),
-                SizedBox(height: 35),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.yellow,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => BillPaymentScreen(accountNumber: widget.accountNumber)),
-                    );
-                  },
-                  child: ListTile(
-                    title: Center(child: Text('Bill payments')),
-                    subtitle: Center(child: Text('Click here to pay your bill')),
+                    subtitle: Center(
+                        child:
+                            Text('Click here to view your past bill details')),
                   ),
                 ),
                 SizedBox(height: 35),
@@ -147,12 +132,36 @@ class _HomeScreenState extends State<HomeScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => CustomerService(accountNumber: widget.accountNumber)),
+                          builder: (context) => BillPaymentScreen(
+                              accountNumber: widget.accountNumber)),
+                    );
+                  },
+                  child: ListTile(
+                    title: Center(child: Text('Bill payments')),
+                    subtitle:
+                        Center(child: Text('Click here to pay your bill')),
+                  ),
+                ),
+                SizedBox(height: 35),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.yellow,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => CustomerService(
+                              accountNumber: widget.accountNumber)),
                     );
                   },
                   child: ListTile(
                     title: Center(child: Text('Other service')),
-                    subtitle: Center(child: Text('Click here to know about our services')),
+                    subtitle: Center(
+                        child: Text('Click here to know about our services')),
                   ),
                 ),
               ],

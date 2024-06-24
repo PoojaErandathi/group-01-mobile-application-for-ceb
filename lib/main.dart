@@ -1,3 +1,4 @@
+import 'package:ceb_app/screens/home_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:ceb_app/screens/signin_screen.dart';
@@ -16,7 +17,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.yellow,
       ),
-      home: SigninScreen(), // Your initial screen
+      // home: SigninScreen(), // Your initial screen
+      home: HomeScreen(accountNumber: '01254369674'), // Your initial screen
     );
   }
 }

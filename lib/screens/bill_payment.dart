@@ -1,10 +1,12 @@
+import 'package:ceb_app/screens/payment_gateway_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class BillPaymentScreen extends StatefulWidget {
   final String accountNumber;
 
-  const BillPaymentScreen({required this.accountNumber, Key? key}) : super(key: key);
+  const BillPaymentScreen({required this.accountNumber, Key? key})
+      : super(key: key);
 
   @override
   _BillPaymentScreenState createState() => _BillPaymentScreenState();
@@ -24,64 +26,13 @@ class _BillPaymentScreenState extends State<BillPaymentScreen> {
         .get();
   }
 
-  void _payNow() async {
-    final double? amount = double.tryParse(_amountController.text.trim());
-
-    if (amount == null || amount <= 0) {
-      _showAlertDialog(
-        "Error",
-        "Please enter a valid amount.",
-        Icons.error_outline,
-        Colors.red,
-      );
-      return;
-    }
-
-    setState(() {
-      _isPaying = true;
-    });
-
-    // Simulate a network call
-    await Future.delayed(Duration(seconds: 2));
-
-    setState(() {
-      _isPaying = false;
-    });
-
-    _showAlertDialog(
-      "Success",
-      "Payment submitted successfully!",
-      Icons.check_circle_outline,
-      Colors.green,
-    );
-
-    _amountController.clear(); // Clear the text field
-  }
-
-  void _showAlertDialog(
-      String title, String message, IconData icon, Color iconColor) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Row(
-            children: [
-              Icon(icon, color: iconColor),
-              SizedBox(width: 10),
-              Text(title),
-            ],
-          ),
-          content: Text(message),
-          actions: <Widget>[
-            TextButton(
-              child: Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
+  void _navigateToPaymentGateway(double amount) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PaymentGatewayScreen(
+            accountNumber: widget.accountNumber, amount: amount),
+      ),
     );
   }
 
@@ -147,7 +98,24 @@ class _BillPaymentScreenState extends State<BillPaymentScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.yellow,
                     ),
-                    onPressed: _isPaying ? null : _payNow,
+                    onPressed: _isPaying
+                        ? null
+                        : () {
+                            final double? amount =
+                                double.tryParse(_amountController.text.trim());
+
+                            if (amount == null || amount <= 0) {
+                              _showAlertDialog(
+                                "Error",
+                                "Please enter a valid amount.",
+                                Icons.error_outline,
+                                Colors.red,
+                              );
+                              return;
+                            }
+
+                            _navigateToPaymentGateway(amount);
+                          },
                     child: _isPaying
                         ? CircularProgressIndicator(color: Colors.black)
                         : Center(child: Text('Pay Now')),
@@ -159,6 +127,33 @@ class _BillPaymentScreenState extends State<BillPaymentScreen> {
         },
       ),
       backgroundColor: Color(0xFF720F11),
+    );
+  }
+
+  void _showAlertDialog(
+      String title, String message, IconData icon, Color iconColor) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(icon, color: iconColor),
+              SizedBox(width: 10),
+              Text(title),
+            ],
+          ),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 

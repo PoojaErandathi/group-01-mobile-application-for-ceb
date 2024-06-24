@@ -1,57 +1,161 @@
 import 'dart:io';
-import 'package:ceb_app/screens/bill_detail_screen.dart'; // Import the BillDetailScreen
+import 'dart:ui' as ui;
+import 'package:camera/camera.dart';
+import 'package:ceb_app/screens/CameraScreen.dart';
+import 'package:ceb_app/screens/calculated_bill.dart';
 import 'package:ceb_app/utils/color_utils.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:image/image.dart' as img;
+import 'package:intl/intl.dart';
 
 class MeterReadingCapture extends StatefulWidget {
-  const MeterReadingCapture({Key? key}) : super(key: key);
+  final String accountNumber;
+
+  MeterReadingCapture({required this.accountNumber});
 
   @override
-  State<MeterReadingCapture> createState() => _MeterReadingCaptureState();
+  _MeterReadingCaptureState createState() => _MeterReadingCaptureState();
 }
 
 class _MeterReadingCaptureState extends State<MeterReadingCapture> {
   File? _image;
+  String? _meterValue;
+  bool _canReadMeter = false;
+  String? _message;
+  DateTime? _nextValidDate;
+  String? _readingForMonth;
 
-  final ImagePicker _imagePicker = ImagePicker();
+  final TextRecognizer textRecognizer = TextRecognizer();
 
-  Future<void> getImage() async {
-    final image = await _imagePicker.pickImage(source: ImageSource.camera);
-    if (image != null) {
+  @override
+  void initState() {
+    super.initState();
+    _checkLastMeterReading();
+  }
+
+  Future<void> _checkLastMeterReading() async {
+    try {
+      // Fetch the latest meter reading
+      final collection = FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.accountNumber)
+          .collection('meterReadings');
+
+      final snapshot =
+          await collection.orderBy('readOn', descending: true).limit(1).get();
+
+      if (snapshot.docs.isNotEmpty) {
+        final latestReading = snapshot.docs.first;
+        final lastReadDate = (latestReading['readOn'] as Timestamp).toDate();
+        final daysSinceLastRead =
+            DateTime.now().difference(lastReadDate).inDays;
+
+        if (daysSinceLastRead >= 30) {
+          setState(() {
+            _canReadMeter = true;
+            _readingForMonth = DateFormat('yyyy-MM').format(DateTime.now());
+            print("Meter reading is allowed for $_readingForMonth.");
+          });
+        } else {
+          final nextValidDate = lastReadDate.add(Duration(days: 30));
+          setState(() {
+            _canReadMeter = false;
+            _nextValidDate = nextValidDate;
+            _message =
+                "More ${30 - daysSinceLastRead} days have get next reading. You have to wait till ${DateFormat('dd/MM/yyyy').format(nextValidDate)}.";
+            print(_message);
+          });
+        }
+      } else {
+        setState(() {
+          _canReadMeter = false;
+          _message = "No previous meter readings found.";
+          print(_message);
+        });
+      }
+    } catch (e) {
       setState(() {
-        _image = File(image.path);
+        _canReadMeter = false;
+        _message = "Error fetching meter readings: $e";
+        print(_message);
       });
-      _showProgressDialog(context);
     }
   }
 
-  void _showProgressDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          content: Row(
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(width: 20),
-              Text("Analysing..."),
-            ],
-          ),
-        );
-      },
+  void _onImageCaptured(File image) {
+    setState(() {
+      _image = image;
+    });
+    _cropAndAnalyzeImage(image);
+  }
+
+  Future<void> _cropAndAnalyzeImage(File image) async {
+    // Read the image into bytes
+    final bytes = await image.readAsBytes();
+    final uiImage = await decodeImageFromList(bytes);
+
+    // Define the ROI
+    final roi = Rect.fromCenter(
+      center: Offset(uiImage.width / 2, uiImage.height / 2),
+      width: 190 * uiImage.width / MediaQuery.of(context).size.width,
+      height: 50 * uiImage.height / MediaQuery.of(context).size.height,
     );
 
-    // Future.delayed(Duration(seconds: 3), () {
-    //   Navigator.of(context).pop(); // Dismiss the progress dialog
-    //   Navigator.push(
-    //     context,
-    //     MaterialPageRoute(
-    //       builder: (context) => BillDetail(), // Navigate to BillDetailScreen
-    //     ),
-    //   );
-    // });
+    // Convert to an image package image
+    final imagePackage = img.decodeImage(bytes)!;
+
+    // Crop the image based on the ROI
+    final croppedImage = img.copyCrop(
+      imagePackage,
+      x: roi.left.toInt(),
+      y: roi.top.toInt(),
+      width: roi.width.toInt(),
+      height: roi.height.toInt(),
+    );
+
+    // Convert the cropped image back to a File
+    final croppedImageFile = File('${image.path}_cropped.png')
+      ..writeAsBytesSync(img.encodePng(croppedImage));
+
+    // Perform text recognition on the cropped image
+    await _analyzeImage(croppedImageFile);
+  }
+
+  Future<void> _analyzeImage(File image) async {
+    final inputImage = InputImage.fromFile(image);
+    final recognizedText = await textRecognizer.processImage(inputImage);
+
+    String extractedText = '';
+    for (TextBlock block in recognizedText.blocks) {
+      for (TextLine line in block.lines) {
+        extractedText += line.text + ' ';
+      }
+    }
+
+    // Sanitize the extracted text to contain only digits
+    String sanitizedText = extractedText.replaceAll(RegExp(r'\D'), '');
+
+    setState(() {
+      _meterValue = sanitizedText;
+    });
+  }
+
+  void _proceedToBill() {
+    if (_meterValue != null && _image != null && _readingForMonth != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CalculatedBill(
+            accountNumber: widget.accountNumber,
+            meterValue: _meterValue!,
+            image: _image!,
+            readingForMonth: _readingForMonth!,
+          ),
+        ),
+      );
+    }
   }
 
   @override
@@ -73,21 +177,67 @@ class _MeterReadingCaptureState extends State<MeterReadingCapture> {
         ),
         child: SingleChildScrollView(
           child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              20,
-              120,
-              20,
-              0,
-            ),
+            padding: EdgeInsets.fromLTRB(20, 10, 20, 0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                if (_readingForMonth != null)
+                  Text(
+                    "Reading for $_readingForMonth",
+                    style: TextStyle(color: Colors.white, fontSize: 18),
+                  ),
+                SizedBox(height: 20),
                 _image == null
                     ? Text(
                         "No image selected",
                         style: TextStyle(color: Colors.white),
                       )
-                    : Image.file(_image!),
+                    : Column(
+                        children: [
+                          SizedBox(
+                            width: 300,
+                            height: 500,
+                            child: Image.file(_image!),
+                          ),
+                          SizedBox(height: 20),
+                          _meterValue != null
+                              ? Text(
+                                  "Meter Reading: $_meterValue",
+                                  style: TextStyle(color: Colors.white),
+                                )
+                              : CircularProgressIndicator(),
+                          SizedBox(height: 20),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.yellow,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            onPressed: _proceedToBill,
+                            child: const Text(
+                              'Proceed to bill',
+                              style: TextStyle(color: Colors.black),
+                            ),
+                          ),
+                        ],
+                      ),
+                if (_message != null)
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      children: [
+                        Icon(Icons.warning, color: Colors.yellow),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _message!,
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 SizedBox(height: 20),
               ],
             ),
@@ -96,7 +246,17 @@ class _MeterReadingCaptureState extends State<MeterReadingCapture> {
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Color(0xFFFFD400),
-        onPressed: getImage,
+        onPressed: _canReadMeter
+            ? () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        CameraScreen(onImageCaptured: _onImageCaptured),
+                  ),
+                );
+              }
+            : null,
         child: Icon(Icons.camera_alt),
       ),
     );
