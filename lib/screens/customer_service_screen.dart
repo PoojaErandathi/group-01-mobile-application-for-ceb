@@ -1,3 +1,5 @@
+import 'package:ceb_app/screens/about_screen.dart';
+import 'package:ceb_app/screens/signin_screen.dart';
 import 'package:ceb_app/screens/submit_complain_screen.dart';
 import 'package:ceb_app/screens/customer_requests_screen.dart'; // Assuming you have this screen
 import 'package:ceb_app/screens/tips_screen.dart';
@@ -14,6 +16,20 @@ class CustomerService extends StatefulWidget {
 }
 
 class _CustomerServiceState extends State<CustomerService> {
+  void _logout() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => SigninScreen()),
+    );
+  }
+
+  void _navigateToAbout() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AboutScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,6 +40,25 @@ class _CustomerServiceState extends State<CustomerService> {
           "Ceylon Electricity Board",
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (String value) {
+              if (value == 'About') {
+                _navigateToAbout();
+              } else if (value == 'Logout') {
+                _logout();
+              }
+            },
+            itemBuilder: (BuildContext context) {
+              return {'About', 'Logout'}.map((String choice) {
+                return PopupMenuItem<String>(
+                  value: choice,
+                  child: Text(choice),
+                );
+              }).toList();
+            },
+          ),
+        ],
       ),
       body: Container(
         width: MediaQuery.of(context).size.width,
@@ -41,23 +76,44 @@ class _CustomerServiceState extends State<CustomerService> {
             ),
             child: Column(
               children: <Widget>[
+                Text(
+                  'Other services',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(height: 20),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.yellow, // Button color
+                    backgroundColor: Color(0xFFFFD400), // Button color
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10), // Adjust the value for the desired roundedness
+                      borderRadius: BorderRadius.circular(
+                          10), // Adjust the value for the desired roundedness
                     ),
                   ),
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => Complains(accountNumber: widget.accountNumber),
+                        builder: (context) =>
+                            Complains(accountNumber: widget.accountNumber),
                       ),
                     );
                   },
-                  child: ListTile(
-                    title: Center(child: Text('Submit your complains')),
+                  child: const ListTile(
+                    leading: Icon(Icons.report_problem, color: Colors.black),
+                    title: Center(
+                        child: Text(
+                      'Submit your complains',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18.0,
+                        color: Colors.black,
+                      ),
+                    )),
                   ),
                 ),
                 SizedBox(
@@ -65,21 +121,33 @@ class _CustomerServiceState extends State<CustomerService> {
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.yellow, // Button color
+                    backgroundColor: Color(0xFFFFD400), // Button color
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10), // Adjust the value for the desired roundedness
+                      borderRadius: BorderRadius.circular(
+                          10), // Adjust the value for the desired roundedness
                     ),
                   ),
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => NewRequest(accountNumber: widget.accountNumber),
+                        builder: (context) =>
+                            NewRequest(accountNumber: widget.accountNumber),
                       ),
                     );
                   },
-                  child: ListTile(
-                    title: Center(child: Text('Submit a request to get a new connection')),
+                  child: const ListTile(
+                    leading: Icon(Icons.add_box, color: Colors.black),
+                    title: Center(
+                        child: Text(
+                      'Submit a request to get a new connection',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18.0,
+                        color: Colors.black,
+                      ),
+                    )),
                   ),
                 ),
                 SizedBox(
@@ -87,9 +155,10 @@ class _CustomerServiceState extends State<CustomerService> {
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.yellow, // Button color
+                    backgroundColor: Color(0xFFFFD400), // Button color
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10), // Adjust the value for the desired roundedness
+                      borderRadius: BorderRadius.circular(
+                          10), // Adjust the value for the desired roundedness
                     ),
                   ),
                   onPressed: () {
@@ -100,8 +169,18 @@ class _CustomerServiceState extends State<CustomerService> {
                       ),
                     );
                   },
-                  child: ListTile(
-                    title: Center(child: Text('Tips for reduce your electricity usage')),
+                  child: const ListTile(
+                    leading: Icon(Icons.lightbulb, color: Colors.black),
+                    title: Center(
+                        child: Text(
+                      'Tips for reduce your electricity usage',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18.0,
+                        color: Colors.black,
+                      ),
+                    )),
                   ),
                 ),
                 SizedBox(

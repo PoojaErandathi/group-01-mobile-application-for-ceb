@@ -1,3 +1,5 @@
+import 'package:ceb_app/screens/about_screen.dart';
+import 'package:ceb_app/screens/signin_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -22,10 +24,31 @@ class _NewRequestState extends State<NewRequest> {
   String? _selectedDistrict;
 
   final List<String> _districts = [
-    'Ampara', 'Anuradhapura', 'Badulla', 'Batticaloa', 'Colombo', 'Galle', 'Gampaha', 
-    'Hambantota', 'Jaffna', 'Kalutara', 'Kandy', 'Kegalle', 'Kilinochchi', 'Kurunegala', 
-    'Mannar', 'Matale', 'Matara', 'Monaragala', 'Mullaitivu', 'Nuwara Eliya', 'Polonnaruwa', 
-    'Puttalam', 'Ratnapura', 'Trincomalee', 'Vavuniya'
+    'Ampara',
+    'Anuradhapura',
+    'Badulla',
+    'Batticaloa',
+    'Colombo',
+    'Galle',
+    'Gampaha',
+    'Hambantota',
+    'Jaffna',
+    'Kalutara',
+    'Kandy',
+    'Kegalle',
+    'Kilinochchi',
+    'Kurunegala',
+    'Mannar',
+    'Matale',
+    'Matara',
+    'Monaragala',
+    'Mullaitivu',
+    'Nuwara Eliya',
+    'Polonnaruwa',
+    'Puttalam',
+    'Ratnapura',
+    'Trincomalee',
+    'Vavuniya'
   ];
 
   bool _isSubmitting = false;
@@ -40,7 +63,10 @@ class _NewRequestState extends State<NewRequest> {
         final Timestamp now = Timestamp.now();
         final String documentId = '${widget.accountNumber}_${now.seconds}';
 
-        await FirebaseFirestore.instance.collection('newRequests').doc(documentId).set({
+        await FirebaseFirestore.instance
+            .collection('newRequests')
+            .doc(documentId)
+            .set({
           'accountNumber': widget.accountNumber,
           'name': _nameController.text.trim(),
           'telephone': _telephoneController.text.trim(),
@@ -83,7 +109,8 @@ class _NewRequestState extends State<NewRequest> {
     }
   }
 
-  void _showAlertDialog(String title, String message, IconData icon, Color iconColor, VoidCallback onPressed) {
+  void _showAlertDialog(String title, String message, IconData icon,
+      Color iconColor, VoidCallback onPressed) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -107,6 +134,20 @@ class _NewRequestState extends State<NewRequest> {
     );
   }
 
+  void _logout() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => SigninScreen()),
+    );
+  }
+
+  void _navigateToAbout() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AboutScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -117,6 +158,25 @@ class _NewRequestState extends State<NewRequest> {
           "Ceylon Electricity Board",
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (String value) {
+              if (value == 'About') {
+                _navigateToAbout();
+              } else if (value == 'Logout') {
+                _logout();
+              }
+            },
+            itemBuilder: (BuildContext context) {
+              return {'About', 'Logout'}.map((String choice) {
+                return PopupMenuItem<String>(
+                  value: choice,
+                  child: Text(choice),
+                );
+              }).toList();
+            },
+          ),
+        ],
       ),
       body: Container(
         width: MediaQuery.of(context).size.width,
@@ -128,7 +188,7 @@ class _NewRequestState extends State<NewRequest> {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(
               20,
-              80,
+              20,
               20,
               0,
             ),
@@ -174,7 +234,8 @@ class _NewRequestState extends State<NewRequest> {
                         _selectedDistrict = newValue;
                       });
                     },
-                    validator: (value) => value == null ? 'Please select a district' : null,
+                    validator: (value) =>
+                        value == null ? 'Please select a district' : null,
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.white,
@@ -184,13 +245,21 @@ class _NewRequestState extends State<NewRequest> {
                   SizedBox(height: 20),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.yellow,
+                      minimumSize: Size(double.infinity, 50),
+                      backgroundColor: Color(0xFFFFD400),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                     onPressed: _isSubmitting ? null : _submitForm,
                     child: _isSubmitting
                         ? CircularProgressIndicator(color: Colors.black)
                         : ListTile(
-                            title: Center(child: Text('Submit')),
+                            title: Center(
+                                child: Text(
+                              'Submit',
+                              style: TextStyle(fontSize: 18.0),
+                            )),
                           ),
                   ),
                 ],

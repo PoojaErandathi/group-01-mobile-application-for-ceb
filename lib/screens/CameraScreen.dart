@@ -25,7 +25,7 @@ class _CameraScreenState extends State<CameraScreen> {
 
   Future<void> _initializeCamera() async {
     final cameras = await availableCameras();
-    _cameraController = CameraController(cameras[0], ResolutionPreset.high);
+    _cameraController = CameraController(cameras[1], ResolutionPreset.high);
     await _cameraController.initialize();
     setState(() {
       _isInitialized = true;
@@ -99,23 +99,33 @@ class _CameraScreenState extends State<CameraScreen> {
                 children: [
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.yellow,
+                      backgroundColor: Color(0xFFFFD400),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
                     onPressed: _retakeImage,
-                    child: Text("Retake"),
+                    child: Text(
+                      "Retake",
+                      style: TextStyle(
+                        color: Colors.black,
+                      ),
+                    ),
                   ),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.yellow,
+                      backgroundColor: Color(0xFFFFD400),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
                     onPressed: _confirmImage,
-                    child: Text("OK"),
+                    child: Text(
+                      "OK",
+                      style: TextStyle(
+                        color: Colors.black,
+                      ),
+                    ),
                   ),
                 ],
               ),

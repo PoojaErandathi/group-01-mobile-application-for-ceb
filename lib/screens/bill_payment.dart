@@ -1,4 +1,7 @@
+import 'package:ceb_app/screens/about_screen.dart';
+import 'package:ceb_app/screens/home_screen.dart';
 import 'package:ceb_app/screens/payment_gateway_screen.dart';
+import 'package:ceb_app/screens/signin_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -36,16 +39,64 @@ class _BillPaymentScreenState extends State<BillPaymentScreen> {
     );
   }
 
+  void _logout() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => SigninScreen()),
+    );
+  }
+
+  void _navigateToAbout() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AboutScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color(0xFFFFD400),
         elevation: 0,
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: Icon(
+            Icons.keyboard_backspace_rounded,
+            color: Colors.black,
+          ),
+          onPressed: () => Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  HomeScreen(accountNumber: widget.accountNumber),
+            ),
+          ),
+          color: Color(0xFFFFD400), // Optional: Set background color if desired
+        ),
         title: const Text(
           "Ceylon Electricity Board",
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (String value) {
+              if (value == 'About') {
+                _navigateToAbout();
+              } else if (value == 'Logout') {
+                _logout();
+              }
+            },
+            itemBuilder: (BuildContext context) {
+              return {'About', 'Logout'}.map((String choice) {
+                return PopupMenuItem<String>(
+                  value: choice,
+                  child: Text(choice),
+                );
+              }).toList();
+            },
+          ),
+        ],
       ),
       body: FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
         future: _userFuture,
@@ -62,8 +113,9 @@ class _BillPaymentScreenState extends State<BillPaymentScreen> {
           final name = userData['name'] ?? 'N/A';
           final accountStatus = userData['accountStatus'] ?? 'N/A';
           final penalty = userData['penalty'] ?? 'N/A';
-          final credit = userData['credit'] ?? 'N/A';
-          final totalPayable = userData['totalPayable'] ?? 'N/A';
+          final credit = userData['credit'] ?? '0';
+          final totalPayable = userData['totalPayable'] ?? '0';
+          final lastMonthBill = userData['lastMonthBill'] ?? '0';
 
           return SingleChildScrollView(
             child: Padding(
@@ -75,8 +127,10 @@ class _BillPaymentScreenState extends State<BillPaymentScreen> {
                   _buildLabel('Name:', name),
                   _buildLabel('Account Status:', accountStatus),
                   _buildLabel('Penalty:', penalty.toString()),
-                  _buildLabel('Credit Balance:', credit.toString()),
-                  _buildLabel('Total Payable:', totalPayable.toString()),
+                  _buildLabel('Monthly Bill:', lastMonthBill.toString()),
+                  _buildLabel('Opening Balance:', credit.toString()),
+                  _buildLabel(
+                      'Total Payable:', (lastMonthBill + credit).toString()),
                   Divider(color: Colors.white),
                   TextField(
                     controller: _amountController,
@@ -96,7 +150,11 @@ class _BillPaymentScreenState extends State<BillPaymentScreen> {
                   SizedBox(height: 20),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.yellow,
+                      minimumSize: Size(double.infinity, 50),
+                      backgroundColor: Color(0xFFFFD400),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                     onPressed: _isPaying
                         ? null
@@ -118,7 +176,12 @@ class _BillPaymentScreenState extends State<BillPaymentScreen> {
                           },
                     child: _isPaying
                         ? CircularProgressIndicator(color: Colors.black)
-                        : Center(child: Text('Pay Now')),
+                        : Center(
+                            child: Text(
+                            'Pay Now',
+                            style:
+                                TextStyle(fontSize: 18.0, color: Colors.black),
+                          )),
                   ),
                 ],
               ),

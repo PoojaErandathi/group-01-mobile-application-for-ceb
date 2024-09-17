@@ -1,7 +1,10 @@
+import 'package:ceb_app/screens/bill_payment.dart';
 import 'package:ceb_app/screens/home_screen.dart';
+import 'package:ceb_app/screens/payment_confirmation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
 class PaymentGatewayScreen extends StatefulWidget {
   final double amount;
@@ -23,6 +26,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   final TextEditingController _cvvController = TextEditingController();
   bool _isPaying = false;
   String _selectedCardType = 'visa';
+  String? _expirationError;
 
   @override
   void initState() {
@@ -31,14 +35,58 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   }
 
   void _navigateToConfirmationScreen() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => PaymentConfirmationScreen(
-          amount: widget.amount,
-          accountNumber: widget.accountNumber,
+    if (_validateExpirationDate()) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => PaymentConfirmationScreen(
+            amount: widget.amount,
+            accountNumber: widget.accountNumber,
+          ),
         ),
-      ),
-    );
+      );
+    }
+  }
+
+  bool _validateExpirationDate() {
+    final input = _expirationController.text;
+    final now = DateTime.now();
+
+    if (input.isEmpty || !RegExp(r'^\d{2}/\d{2}$').hasMatch(input)) {
+      setState(() {
+        _expirationError = 'Invalid date format.';
+      });
+      return false;
+    }
+
+    final parts = input.split('/');
+    final month = int.tryParse(parts[0]);
+    final year = int.tryParse('20${parts[1]}');
+
+    if (month == null || year == null || month < 1 || month > 12) {
+      setState(() {
+        _expirationError = 'Invalid month';
+      });
+      return false;
+    }
+
+    if (year < now.year || (year == now.year && month < now.month)) {
+      setState(() {
+        _expirationError = 'Card has expired';
+      });
+      return false;
+    }
+
+    if (year > now.year + 5) {
+      setState(() {
+        _expirationError = 'Invalid year';
+      });
+      return false;
+    }
+
+    setState(() {
+      _expirationError = null;
+    });
+    return true;
   }
 
   @override
@@ -146,6 +194,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                             contentPadding: EdgeInsets.all(8),
                             hintText: 'MM/YY',
                             border: OutlineInputBorder(),
+                            errorText: _expirationError,
                           ),
                           keyboardType: TextInputType.number,
                           inputFormatters: [
@@ -191,14 +240,20 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
               SizedBox(height: 20),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.yellow,
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  textStyle: TextStyle(fontSize: 16),
+                  backgroundColor: Color(0xFFFFD400),
+                  minimumSize: Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
                 onPressed: _isPaying ? null : _navigateToConfirmationScreen,
                 child: _isPaying
                     ? CircularProgressIndicator(color: Colors.black)
-                    : Center(child: Text('Pay now')),
+                    : Center(
+                        child: Text(
+                        'Pay now',
+                        style: TextStyle(fontSize: 16, color: Colors.black),
+                      )),
               ),
             ],
           ),
@@ -219,8 +274,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         padding: EdgeInsets.all(4.0),
         decoration: BoxDecoration(
           border: Border.all(
-            color:
-                _selectedCardType == type ? Colors.yellow : Colors.transparent,
+            color: _selectedCardType == type
+                ? Color(0xFFFFD400)
+                : Colors.transparent,
             width: 2,
           ),
           borderRadius: BorderRadius.circular(4.0),
@@ -264,126 +320,19 @@ class ExpirationDateInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
       TextEditingValue oldValue, TextEditingValue newValue) {
-    var text = newValue.text.replaceAll(RegExp(r'\D'), ''); // Remove non-digits
+    var text = newValue.text.replaceAll(RegExp(r'\D'), '');
 
     if (text.length > 4) {
       text = text.substring(0, 4);
     }
 
-    if (text.length >= 3) {
-      text = text.substring(0, 2) + '/' + text.substring(2);
+    if (text.length >= 2) {
+      text = '${text.substring(0, 2)}/${text.substring(2)}';
     }
 
     return TextEditingValue(
       text: text,
       selection: TextSelection.collapsed(offset: text.length),
-    );
-  }
-}
-
-class PaymentConfirmationScreen extends StatefulWidget {
-  final double amount;
-  final String accountNumber;
-
-  const PaymentConfirmationScreen(
-      {required this.amount, Key? key, required this.accountNumber})
-      : super(key: key);
-
-  @override
-  _PaymentConfirmationScreenState createState() =>
-      _PaymentConfirmationScreenState();
-}
-
-class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
-  bool _isProcessing = false;
-
-  void _confirmPayment() async {
-    setState(() {
-      _isProcessing = true;
-    });
-
-    // Fetch and update totalPayable and credit
-    final userDoc = FirebaseFirestore.instance
-        .collection('users')
-        .doc(widget.accountNumber);
-    final userSnapshot = await userDoc.get();
-    final currentTotalPayable = userSnapshot['totalPayable'];
-    final currentCredit = userSnapshot['credit'];
-
-    if (widget.amount < currentTotalPayable) {
-      final newTotalPayable =
-          currentTotalPayable - widget.amount - currentCredit;
-      await userDoc.update({
-        'totalPayable': newTotalPayable,
-        'credit': 0,
-      });
-    } else {
-      final newCredit = widget.amount - currentTotalPayable + currentCredit;
-      await userDoc.update({
-        'totalPayable': 0,
-        'credit': newCredit,
-      });
-    }
-
-    setState(() {
-      _isProcessing = false;
-    });
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (context) =>
-              HomeScreen(accountNumber: widget.accountNumber)),
-    );
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Payment successful!'),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Color(0xFFFFD400),
-        elevation: 0,
-        title: const Text(
-          "Ceylon Electricity Board",
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "Confirm the payment?",
-                style: TextStyle(fontSize: 20),
-              ),
-              SizedBox(height: 20),
-              Text(
-                "\$${widget.amount.toStringAsFixed(2)}",
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.yellow,
-                  padding: EdgeInsets.symmetric(vertical: 16, horizontal: 32),
-                  textStyle: TextStyle(fontSize: 16),
-                ),
-                onPressed: _isProcessing ? null : _confirmPayment,
-                child: _isProcessing
-                    ? CircularProgressIndicator(color: Colors.black)
-                    : Text('Confirm payment'),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

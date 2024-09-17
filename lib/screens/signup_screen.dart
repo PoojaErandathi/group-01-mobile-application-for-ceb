@@ -12,11 +12,14 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
-  TextEditingController _userNameTextController = TextEditingController();
-  TextEditingController _emailTextController = TextEditingController();
-  TextEditingController _phoneTextController = TextEditingController();
-  TextEditingController _accNumTextController = TextEditingController();
-  TextEditingController _passwordTextController = TextEditingController();
+  final TextEditingController _userNameTextController = TextEditingController();
+  final TextEditingController _emailTextController = TextEditingController();
+  final TextEditingController _phoneTextController = TextEditingController();
+  final TextEditingController _accNumTextController = TextEditingController();
+  final TextEditingController _passwordTextController = TextEditingController();
+  final TextEditingController _passwordConfirmTextController =
+      TextEditingController();
+
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -24,11 +27,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFFFFD400),
         elevation: 0,
         title: const Text(
           "Sign Up",
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          style: TextStyle(
+              fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
         ),
       ),
       body: Container(
@@ -39,48 +43,56 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ),
         child: SingleChildScrollView(
           child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              20,
-              120, // Adjusted the top padding to move the logo up
-              20,
-              0,
-            ),
+            padding: const EdgeInsets.fromLTRB(20, 120, 20, 0),
             child: Form(
               key: _formKey,
               child: Column(
                 children: <Widget>[
-                  SizedBox(
-                    height: 20,
+                  const SizedBox(height: 20),
+                  reusableTextField(
+                    "Enter UserName",
+                    Icons.person_outline,
+                    false,
+                    _userNameTextController,
                   ),
-                  reusableTextField("Enter UserName", Icons.person_outline, false,
-                      _userNameTextController),
-                  SizedBox(
-                    height: 20,
+                  const SizedBox(height: 20),
+                  reusableTextField(
+                    "Enter Email",
+                    Icons.email_outlined,
+                    false,
+                    _emailTextController,
                   ),
-                  reusableTextField("Enter Email", Icons.email_outlined, false,
-                      _emailTextController),
-                  SizedBox(
-                    height: 20,
+                  const SizedBox(height: 20),
+                  reusableTextField(
+                    "Enter Phone number",
+                    Icons.call,
+                    false,
+                    _phoneTextController,
                   ),
-                  reusableTextField("Enter Phone number", Icons.call, false,
-                      _phoneTextController),
-                  SizedBox(
-                    height: 20,
+                  const SizedBox(height: 20),
+                  reusableTextField(
+                    "Enter Account No",
+                    Icons.wb_iridescent_outlined,
+                    false,
+                    _accNumTextController,
                   ),
-                  reusableTextField("Enter Account No", Icons.wb_iridescent_outlined, false,
-                      _accNumTextController),
-                  SizedBox(
-                    height: 20,
+                  const SizedBox(height: 20),
+                  reusableTextField(
+                    "Enter Password",
+                    Icons.lock_outline,
+                    true,
+                    _passwordTextController,
                   ),
-                  reusableTextField("Enter Password", Icons.lock_outline, true,
-                      _passwordTextController),
-                  SizedBox(
-                    height: 20,
+                  const SizedBox(height: 20),
+                  reusableTextField(
+                    "Confirm Password",
+                    Icons.lock_outline,
+                    true,
+                    _passwordConfirmTextController,
                   ),
+                  const SizedBox(height: 20),
                   signInSignUpButton(context, false, () {
-                    if (_formKey.currentState!.validate()) {
-                      _signUpUser();
-                    }
+                    _signUpUser();
                   }),
                 ],
               ),
@@ -92,46 +104,109 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   Future<void> _signUpUser() async {
+    // Collect the input values
+    String username = _userNameTextController.text;
+    String email = _emailTextController.text;
+    String phone = _phoneTextController.text;
+    String accountNumber = _accNumTextController.text;
+    String password = _passwordTextController.text;
+    String confirmPassword = _passwordConfirmTextController.text;
+
+    // Validation
+    if (username.isEmpty ||
+        email.isEmpty ||
+        phone.isEmpty ||
+        accountNumber.isEmpty ||
+        password.isEmpty ||
+        confirmPassword.isEmpty) {
+      _showErrorDialog("Please fill in all the fields.");
+      return;
+    }
+
+    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
+      _showErrorDialog("Please enter a valid email address.");
+      return;
+    }
+
+    if (phone.length != 10 || !RegExp(r'^[0-9]+$').hasMatch(phone)) {
+      _showErrorDialog("Please enter a valid 10-digit phone number.");
+      return;
+    }
+
+    if (accountNumber.length != 10 ||
+        !RegExp(r'^[0-9]+$').hasMatch(accountNumber)) {
+      _showErrorDialog("Please enter a valid 10-digit account number.");
+      return;
+    }
+
+    if (!_isPasswordStrong(password)) {
+      _showErrorDialog(
+          "Password must be at least 8 characters long, include at least one uppercase letter, one lowercase letter, one number, and one special symbol.");
+      return;
+    }
+
+    if (password != confirmPassword) {
+      _showErrorDialog("Passwords do not match.");
+      return;
+    }
+
     try {
-      String accountNumber = _accNumTextController.text;
       DocumentReference userDoc =
           FirebaseFirestore.instance.collection('users').doc(accountNumber);
 
       // Create a new user document
       await userDoc.set({
-        'name': _userNameTextController.text,
-        'email': _emailTextController.text,
-        'phone': _phoneTextController.text,
-        'password': _passwordTextController.text, // In a real app, hash the password before storing it
+        'name': username,
+        'email': email,
+        'phone': phone,
+        'password': password,
         'createdAt': Timestamp.now(),
       });
 
-      // Navigate to home screen
-      Navigator.push(
+      // Navigate to the home screen
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) => HomeScreen(accountNumber: accountNumber),
         ),
       );
     } catch (e) {
-      print("Error signing up: $e");
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text("Error"),
-            content: Text("Failed to sign up. Please try again."),
-            actions: <Widget>[
-              TextButton(
-                child: Text("OK"),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          );
-        },
-      );
+      _showErrorDialog("Failed to sign up. Please try again.");
     }
+  }
+
+  bool _isPasswordStrong(String password) {
+    bool hasUpperCase = password.contains(RegExp(r'[A-Z]'));
+    bool hasLowerCase = password.contains(RegExp(r'[a-z]'));
+    bool hasDigits = password.contains(RegExp(r'[0-9]'));
+    bool hasSpecialCharacters =
+        password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
+    bool hasMinLength = password.length >= 8;
+
+    return hasUpperCase &&
+        hasLowerCase &&
+        hasDigits &&
+        hasSpecialCharacters &&
+        hasMinLength;
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Error"),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("OK"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 }

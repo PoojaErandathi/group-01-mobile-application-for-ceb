@@ -1,4 +1,6 @@
+import 'package:ceb_app/screens/about_screen.dart';
 import 'package:ceb_app/screens/bill_detail_screen.dart';
+import 'package:ceb_app/screens/signin_screen.dart';
 import 'package:ceb_app/utils/color_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -28,14 +30,39 @@ class _PastBillDetailsState extends State<PastBillDetails> {
           .collection('users')
           .doc(widget.accountNumber)
           .collection('meterReadings')
+          .where('endReading',
+              isNotEqualTo: 0) // Filter for endReading not equal to 0
           .get();
 
       setState(() {
         billMonths = billSnapshot.docs.map((doc) => doc.id).toList();
+
+        // Sort the list in descending order (highest to lowest)
+        billMonths.sort((a, b) => b.compareTo(a));
       });
     } catch (e) {
       print("Error fetching bill months: $e");
     }
+  }
+
+  String formatMonth(String month) {
+    String year = month.substring(0, 4);
+    String formattedMonth = month.substring(4, 6);
+    return "$year-$formattedMonth";
+  }
+
+  void _logout() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => SigninScreen()),
+    );
+  }
+
+  void _navigateToAbout() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AboutScreen()),
+    );
   }
 
   @override
@@ -48,6 +75,25 @@ class _PastBillDetailsState extends State<PastBillDetails> {
           "Ceylon Electricity Board",
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (String value) {
+              if (value == 'About') {
+                _navigateToAbout();
+              } else if (value == 'Logout') {
+                _logout();
+              }
+            },
+            itemBuilder: (BuildContext context) {
+              return {'About', 'Logout'}.map((String choice) {
+                return PopupMenuItem<String>(
+                  value: choice,
+                  child: Text(choice),
+                );
+              }).toList();
+            },
+          ),
+        ],
       ),
       body: Container(
         width: MediaQuery.of(context).size.width,
@@ -78,7 +124,7 @@ class _PastBillDetailsState extends State<PastBillDetails> {
                       children: [
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.yellow,
+                            backgroundColor: Color(0xFFFFD400),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -94,7 +140,15 @@ class _PastBillDetailsState extends State<PastBillDetails> {
                             );
                           },
                           child: ListTile(
-                            title: Center(child: Text(month)),
+                            title: Center(
+                                child: Text(
+                              formatMonth(month),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18.0,
+                                color: Colors.black,
+                              ),
+                            )),
                           ),
                         ),
                         SizedBox(height: 20), // Add space between buttons

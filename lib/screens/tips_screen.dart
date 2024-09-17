@@ -1,3 +1,5 @@
+import 'package:ceb_app/screens/about_screen.dart';
+import 'package:ceb_app/screens/signin_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:math';
@@ -22,8 +24,10 @@ class _TipsState extends State<Tips> {
 
   Future<void> _loadTips() async {
     try {
-      QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('tips').get();
-      List<String> tips = snapshot.docs.map((doc) => doc['tipText'] as String).toList();
+      QuerySnapshot snapshot =
+          await FirebaseFirestore.instance.collection('tips').get();
+      List<String> tips =
+          snapshot.docs.map((doc) => doc['tipText'] as String).toList();
 
       setState(() {
         selectedTips = _getRandomTips(tips);
@@ -62,6 +66,20 @@ class _TipsState extends State<Tips> {
     );
   }
 
+  void _logout() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => SigninScreen()),
+    );
+  }
+
+  void _navigateToAbout() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AboutScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -72,6 +90,25 @@ class _TipsState extends State<Tips> {
           "Ceylon Electricity Board",
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (String value) {
+              if (value == 'About') {
+                _navigateToAbout();
+              } else if (value == 'Logout') {
+                _logout();
+              }
+            },
+            itemBuilder: (BuildContext context) {
+              return {'About', 'Logout'}.map((String choice) {
+                return PopupMenuItem<String>(
+                  value: choice,
+                  child: Text(choice),
+                );
+              }).toList();
+            },
+          ),
+        ],
       ),
       body: Container(
         width: MediaQuery.of(context).size.width,
@@ -112,7 +149,8 @@ class _TipsState extends State<Tips> {
                                     (tip) => GestureDetector(
                                       onTap: () => _showTipDetail(tip),
                                       child: Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 8.0),
                                         child: Text(
                                           tip,
                                           style: TextStyle(fontSize: 18),

@@ -1,3 +1,5 @@
+import 'package:ceb_app/screens/about_screen.dart';
+import 'package:ceb_app/screens/signin_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -34,9 +36,13 @@ class _ComplainsState extends State<Complains> {
     try {
       final Timestamp now = Timestamp.now();
       final String date = now.toDate().toString().split(' ')[0]; // YYYY-MM-DD
-      final String documentId = '${widget.accountNumber}_${date.replaceAll('-', '_')}_${now.seconds}';
+      final String documentId =
+          '${widget.accountNumber}_${date.replaceAll('-', '_')}_${now.seconds}';
 
-      await FirebaseFirestore.instance.collection('complaints').doc(documentId).set({
+      await FirebaseFirestore.instance
+          .collection('complaints')
+          .doc(documentId)
+          .set({
         'userAccountNumber': widget.accountNumber,
         'complaint': complain,
         'submittedAt': now,
@@ -65,7 +71,8 @@ class _ComplainsState extends State<Complains> {
     }
   }
 
-  void _showAlertDialog(String title, String message, IconData icon, Color iconColor) {
+  void _showAlertDialog(
+      String title, String message, IconData icon, Color iconColor) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -91,6 +98,20 @@ class _ComplainsState extends State<Complains> {
     );
   }
 
+  void _logout() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => SigninScreen()),
+    );
+  }
+
+  void _navigateToAbout() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AboutScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -101,6 +122,25 @@ class _ComplainsState extends State<Complains> {
           "Ceylon Electricity Board",
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (String value) {
+              if (value == 'About') {
+                _navigateToAbout();
+              } else if (value == 'Logout') {
+                _logout();
+              }
+            },
+            itemBuilder: (BuildContext context) {
+              return {'About', 'Logout'}.map((String choice) {
+                return PopupMenuItem<String>(
+                  value: choice,
+                  child: Text(choice),
+                );
+              }).toList();
+            },
+          ),
+        ],
       ),
       body: Container(
         width: MediaQuery.of(context).size.width,
@@ -163,13 +203,21 @@ class _ComplainsState extends State<Complains> {
                 SizedBox(height: 10),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.yellow,
+                    minimumSize: Size(double.infinity, 50),
+                    backgroundColor: Color(0xFFFFD400),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                   onPressed: _isSubmitting ? null : _submitComplain,
                   child: _isSubmitting
-                      ? CircularProgressIndicator(color: Colors.yellow)
+                      ? CircularProgressIndicator(color: Color(0xFFFFD400))
                       : ListTile(
-                          title: Center(child: Text('Submit')),
+                          title: Center(
+                              child: Text(
+                            'Submit',
+                            style: TextStyle(fontSize: 18.0),
+                          )),
                         ),
                 ),
               ],

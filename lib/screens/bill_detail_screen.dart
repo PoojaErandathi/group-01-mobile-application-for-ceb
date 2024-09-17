@@ -1,3 +1,5 @@
+import 'package:ceb_app/screens/about_screen.dart';
+import 'package:ceb_app/screens/signin_screen.dart';
 import 'package:ceb_app/utils/color_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -17,6 +19,7 @@ class BillDetail extends StatefulWidget {
 class _BillDetailState extends State<BillDetail> {
   Map<String, dynamic> billData = {};
   bool isLoading = true;
+  double totalPayable = 0.0;
 
   @override
   void initState() {
@@ -26,6 +29,7 @@ class _BillDetailState extends State<BillDetail> {
 
   void fetchBillDetails() async {
     try {
+      // Fetch the bill details from the 'meterReadings' subcollection
       DocumentSnapshot billSnapshot = await FirebaseFirestore.instance
           .collection('users')
           .doc(widget.accountNumber)
@@ -33,9 +37,25 @@ class _BillDetailState extends State<BillDetail> {
           .doc(widget.month)
           .get();
 
-      if (billSnapshot.exists) {
+      // Fetch the user document to get the credit value
+      DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.accountNumber)
+          .get();
+
+      if (billSnapshot.exists && userSnapshot.exists) {
         setState(() {
+          // Combine both maps, with credit from user document
           billData = billSnapshot.data() as Map<String, dynamic>;
+          billData['credit'] = userSnapshot['credit'] ?? 0.0;
+
+          // Calculate the total payable
+          double monthlyBill = (billData['monthlyBill'] ?? 0.0).toDouble();
+          double fixedCharge = (billData['fixedCharge'] ?? 0.0).toDouble();
+          // double credit = (billData['credit'] ?? 0.0).toDouble();
+
+          totalPayable = monthlyBill + fixedCharge;
+
           isLoading = false;
         });
       } else {
@@ -56,6 +76,20 @@ class _BillDetailState extends State<BillDetail> {
     return DateFormat('dd/MM/yyyy HH:mm:ss').format(dateTime);
   }
 
+  void _logout() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => SigninScreen()),
+    );
+  }
+
+  void _navigateToAbout() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AboutScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,6 +100,25 @@ class _BillDetailState extends State<BillDetail> {
           "Ceylon Electricity Board",
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (String value) {
+              if (value == 'About') {
+                _navigateToAbout();
+              } else if (value == 'Logout') {
+                _logout();
+              }
+            },
+            itemBuilder: (BuildContext context) {
+              return {'About', 'Logout'}.map((String choice) {
+                return PopupMenuItem<String>(
+                  value: choice,
+                  child: Text(choice),
+                );
+              }).toList();
+            },
+          ),
+        ],
       ),
       body: Container(
         width: MediaQuery.of(context).size.width,
@@ -78,9 +131,9 @@ class _BillDetailState extends State<BillDetail> {
             : SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(
-                    20,
+                    10,
                     120,
-                    20,
+                    10,
                     0,
                   ),
                   child: Column(
@@ -108,32 +161,42 @@ class _BillDetailState extends State<BillDetail> {
                               children: [
                                 Text(
                                   "Account number: ${widget.accountNumber}",
-                                  style: TextStyle(fontSize: 18),
+                                  style: TextStyle(fontSize: 16),
                                 ),
                                 SizedBox(height: 8),
                                 Text(
                                   "Read on: ${billData['readOn'] != null ? formatTimestamp(billData['readOn']) : 'N/A'}",
-                                  style: TextStyle(fontSize: 18),
+                                  style: TextStyle(fontSize: 16),
                                 ),
                                 SizedBox(height: 8),
                                 Text(
-                                  "Meter reading: ${billData['readingValue'] ?? 'N/A'}",
-                                  style: TextStyle(fontSize: 18),
+                                  "Meter Reading: ${billData['endReading'] ?? 'N/A'} - ${billData['pastReading'] ?? 'N/A'} = ${billData['units'] ?? 'N/A'} Units",
+                                  style: TextStyle(fontSize: 16),
                                 ),
                                 SizedBox(height: 8),
                                 Text(
-                                  "Monthly bill: Rs.${billData['monthlyBill'] ?? 'N/A'}",
-                                  style: TextStyle(fontSize: 18),
+                                  "Number of units: ${billData['units'] ?? 'N/A'}",
+                                  style: TextStyle(fontSize: 16),
                                 ),
                                 SizedBox(height: 8),
                                 Text(
-                                  "Total payable: Rs.${billData['totalPayable'] ?? 'N/A'}",
-                                  style: TextStyle(fontSize: 18),
+                                  "Value for units: Rs.${billData['monthlyBill'] ?? 'N/A'}",
+                                  style: TextStyle(fontSize: 16),
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  "Fixed charge: Rs.${billData['fixedCharge'] ?? 'N/A'}",
+                                  style: TextStyle(fontSize: 16),
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  "Total Monthly bill: Rs.$totalPayable",
+                                  style: TextStyle(fontSize: 16),
                                 ),
                                 SizedBox(height: 8),
                                 Text(
                                   "Due date: ${billData['dueDate'] != null ? formatTimestamp(billData['dueDate']) : 'N/A'}",
-                                  style: TextStyle(fontSize: 18),
+                                  style: TextStyle(fontSize: 16),
                                 ),
                                 SizedBox(height: 8),
                               ],
@@ -142,17 +205,6 @@ class _BillDetailState extends State<BillDetail> {
                         ),
                       ),
                       SizedBox(height: 10),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.yellow, // Button color
-                        ),
-                        onPressed: () {
-                          // Add navigation or functionality here
-                        },
-                        child: ListTile(
-                          title: Center(child: Text('Continue to payment')),
-                        ),
-                      ),
                     ],
                   ),
                 ),

@@ -1,4 +1,5 @@
 import 'package:ceb_app/reusable_widgets/reusable_widgets.dart';
+import 'package:ceb_app/screens/forgotPassword.dart';
 import 'package:ceb_app/screens/home_screen.dart';
 import 'package:ceb_app/screens/signup_screen.dart';
 import 'package:ceb_app/utils/color_utils.dart';
@@ -42,6 +43,16 @@ class _SigninScreenState extends State<SigninScreen> {
               children: <Widget>[
                 logoWidget("assets/images/ceb_logo.png"),
                 SizedBox(
+                  height: 10,
+                ),
+                const Text(
+                  "Ceylon Electricity Board",
+                  style: TextStyle(
+                      fontSize: 22.0,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
+                ),
+                SizedBox(
                   height: 30,
                 ),
                 reusableTextField(
@@ -69,7 +80,8 @@ class _SigninScreenState extends State<SigninScreen> {
                           _isLoading = true;
                         });
 
-                        String accountNumber = _accountNumberTextController.text;
+                        String accountNumber =
+                            _accountNumberTextController.text;
                         String password = _passwordTextController.text;
 
                         if (accountNumber.isNotEmpty && password.isNotEmpty) {
@@ -87,7 +99,8 @@ class _SigninScreenState extends State<SigninScreen> {
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => HomeScreen(accountNumber: accountNumber),
+                                    builder: (context) => HomeScreen(
+                                        accountNumber: accountNumber),
                                   ),
                                 );
                               } else {
@@ -95,7 +108,9 @@ class _SigninScreenState extends State<SigninScreen> {
                                     "The password you entered is incorrect.");
                               }
                             } else {
-                              _showAlertDialog(context, "Invalid Account Number",
+                              _showAlertDialog(
+                                  context,
+                                  "Invalid Account Number",
                                   "The account number you entered does not exist.");
                             }
                           } catch (e) {
@@ -123,23 +138,53 @@ class _SigninScreenState extends State<SigninScreen> {
     );
   }
 
-  Row signUpOption() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+  Column signUpOption() {
+    return Column(
       children: [
-        const Text("Don't have account?", style: TextStyle(color: Colors.white70)),
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => SignUpScreen()),
-            );
-          },
-          child: const Text(
-            " Sign Up",
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text("Don't have account ?",
+                style: TextStyle(color: Colors.white70)),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SignUpScreen()),
+                );
+              },
+              child: const Text(
+                " Sign Up",
+                style:
+                    TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
         ),
+        const SizedBox(
+          height: 20,
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text("Not remember password ? ",
+                style: TextStyle(color: Colors.white70)),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => ForgotPasswordScreen()),
+                );
+              },
+              child: const Text(
+                "Reset Password",
+                style:
+                    TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        )
       ],
     );
   }

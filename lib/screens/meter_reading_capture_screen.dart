@@ -2,7 +2,9 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:camera/camera.dart';
 import 'package:ceb_app/screens/CameraScreen.dart';
+import 'package:ceb_app/screens/about_screen.dart';
 import 'package:ceb_app/screens/calculated_bill.dart';
+import 'package:ceb_app/screens/signin_screen.dart';
 import 'package:ceb_app/utils/color_utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -26,6 +28,7 @@ class _MeterReadingCaptureState extends State<MeterReadingCapture> {
   String? _message;
   DateTime? _nextValidDate;
   String? _readingForMonth;
+  String? _displayMonth;
 
   final TextRecognizer textRecognizer = TextRecognizer();
 
@@ -52,6 +55,13 @@ class _MeterReadingCaptureState extends State<MeterReadingCapture> {
         final daysSinceLastRead =
             DateTime.now().difference(lastReadDate).inDays;
 
+        final now = DateTime.now();
+        final previousMonth = now.subtract(
+            const Duration(days: 31)); // Subtract one month (approximately)
+
+        // Format the previous month with 'yyyy-MM' format
+        _displayMonth = DateFormat('yyyy-MM').format(previousMonth);
+
         if (daysSinceLastRead >= 30) {
           setState(() {
             _canReadMeter = true;
@@ -64,7 +74,7 @@ class _MeterReadingCaptureState extends State<MeterReadingCapture> {
             _canReadMeter = false;
             _nextValidDate = nextValidDate;
             _message =
-                "More ${30 - daysSinceLastRead} days have get next reading. You have to wait till ${DateFormat('dd/MM/yyyy').format(nextValidDate)}.";
+                "More ${30 - daysSinceLastRead} days have to get next reading. You have to wait till ${DateFormat('dd/MM/yyyy').format(nextValidDate)}.";
             print(_message);
           });
         }
@@ -144,18 +154,45 @@ class _MeterReadingCaptureState extends State<MeterReadingCapture> {
 
   void _proceedToBill() {
     if (_meterValue != null && _image != null && _readingForMonth != null) {
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) => CalculatedBill(
             accountNumber: widget.accountNumber,
             meterValue: _meterValue!,
             image: _image!,
-            readingForMonth: _readingForMonth!,
+            readingForMonth: _displayMonth!,
           ),
         ),
       );
     }
+  }
+
+  void _retakeFalseReading() {
+    _meterValue = null;
+    _image = null;
+    _readingForMonth = null;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CameraScreen(onImageCaptured: _onImageCaptured),
+      ),
+    );
+  }
+
+  void _logout() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => SigninScreen()),
+    );
+  }
+
+  void _navigateToAbout() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AboutScreen()),
+    );
   }
 
   @override
@@ -168,6 +205,25 @@ class _MeterReadingCaptureState extends State<MeterReadingCapture> {
           "Ceylon Electricity Board",
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (String value) {
+              if (value == 'About') {
+                _navigateToAbout();
+              } else if (value == 'Logout') {
+                _logout();
+              }
+            },
+            itemBuilder: (BuildContext context) {
+              return {'About', 'Logout'}.map((String choice) {
+                return PopupMenuItem<String>(
+                  value: choice,
+                  child: Text(choice),
+                );
+              }).toList();
+            },
+          ),
+        ],
       ),
       body: Container(
         width: MediaQuery.of(context).size.width,
@@ -183,7 +239,7 @@ class _MeterReadingCaptureState extends State<MeterReadingCapture> {
               children: [
                 if (_readingForMonth != null)
                   Text(
-                    "Reading for $_readingForMonth",
+                    "Reading for $_displayMonth",
                     style: TextStyle(color: Colors.white, fontSize: 18),
                   ),
                 SizedBox(height: 20),
@@ -196,20 +252,20 @@ class _MeterReadingCaptureState extends State<MeterReadingCapture> {
                         children: [
                           SizedBox(
                             width: 300,
-                            height: 500,
+                            height: 400,
                             child: Image.file(_image!),
                           ),
                           SizedBox(height: 20),
                           _meterValue != null
                               ? Text(
-                                  "Meter Reading: $_meterValue",
+                                  "Meter Reading: $_meterValue kWh",
                                   style: TextStyle(color: Colors.white),
                                 )
                               : CircularProgressIndicator(),
                           SizedBox(height: 20),
                           ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.yellow,
+                              backgroundColor: Color(0xFFFFD400),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -220,6 +276,19 @@ class _MeterReadingCaptureState extends State<MeterReadingCapture> {
                               style: TextStyle(color: Colors.black),
                             ),
                           ),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            onPressed: _retakeFalseReading,
+                            child: const Text(
+                              'Retake false reading',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
                         ],
                       ),
                 if (_message != null)
@@ -227,7 +296,7 @@ class _MeterReadingCaptureState extends State<MeterReadingCapture> {
                     padding: const EdgeInsets.all(8.0),
                     child: Row(
                       children: [
-                        Icon(Icons.warning, color: Colors.yellow),
+                        Icon(Icons.warning, color: Color(0xFFFFD400)),
                         SizedBox(width: 8),
                         Expanded(
                           child: Text(
